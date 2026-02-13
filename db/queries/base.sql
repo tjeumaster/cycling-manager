@@ -54,3 +54,8 @@ ORDER BY start_timestamp;
 INSERT INTO race_category_points (category, position, points)
 VALUES (:category, :position, :points)
 ON CONFLICT (category, position) DO NOTHING;
+
+-- name: get_pcs_races()
+SELECT id, name, year, start_timestamp, category, pcs_path, status
+FROM races
+WHERE pcs_path IS NOT NULL;

@@ -26,7 +26,8 @@ class Race(BaseModel):
     year: int
     start_timestamp: datetime
     category: RaceCategory
-    status: RaceStatus    
+    status: RaceStatus
+    pcs_path: str | None = None    
     
 class RaceCategoryPointsCreate(BaseModel):
     category: RaceCategory

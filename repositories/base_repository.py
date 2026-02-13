@@ -39,6 +39,10 @@ class BaseRepository:
     async def insert_race_category_points(self, race_category_points: RaceCategoryPointsCreate):
         race_category_points_dict = race_category_points.model_dump()
         await queries.insert_race_category_points(self.conn, **race_category_points_dict)
+        
+    async def get_pcs_races(self) -> list[Race]:
+        rows = queries.get_pcs_races(self.conn)
+        return [Race.model_validate(dict(row)) async for row in rows]
 
 def get_base_repository(conn: Connection = Depends(db.get_connection)) -> BaseRepository:
     return BaseRepository(conn)

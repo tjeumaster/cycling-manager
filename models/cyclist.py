@@ -33,3 +33,8 @@ class Cyclist(BaseModel):
             age -= 1
         return age
     
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        return f"{self.last_name} {self.first_name}"
+    

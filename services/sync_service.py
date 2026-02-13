@@ -3,16 +3,21 @@ from datetime import datetime
 import json
 from config import settings
 from fastapi import Depends
-from models.cyclist import CyclistCreate
+from models.cyclist import Cyclist, CyclistCreate
 from models.race import RaceCategoryPointsCreate, RaceCreate
+from models.result import RaceResultCreate
 from models.team import TeamCreate
 from repositories.base_repository import BaseRepository, get_base_repository
 from loguru import logger
 from zoneinfo import ZoneInfo
+from rapidfuzz import process, fuzz, utils
+from repositories.result_repository import ResultRepository, get_result_repository
+from services.pcs_service import PcsService
 
 @dataclass
 class SyncService:
     base_repo: BaseRepository | None = None
+    result_repo: ResultRepository | None = None
     
     async def sync(self):
         await self.sync_teams()
@@ -160,6 +165,59 @@ class SyncService:
             message = f"Error syncing race category points data: {e}"
             logger.error(message)
             raise Exception(message)
+    
+    async def sync_race_results(self):
+        pcs = PcsService()
+        races = await self.base_repo.get_pcs_races()
+        cyclists = await self.base_repo.get_cyclists()
         
-def get_sync_service(base_repo: BaseRepository = Depends(get_base_repository)) -> SyncService:
-    return SyncService(base_repo)
+        for race in races:
+            result = await pcs.fetch_race_results(race.pcs_path, race.year)
+            
+            for r in result:
+                search_query = r.cyclist_name
+                cyclist = self.find_cyclist_match(search_query, cyclists)
+                cyclist_id = cyclist.id if cyclist else None
+                race_result = RaceResultCreate(
+                    cyclist_id=cyclist_id,
+                    race_id=race.id,
+                    position=r.position,
+                    cyclist_full_name=r.cyclist_name,
+                    info=r.info
+                )
+                    
+                await self.result_repo.insert_race_result(race_result)
+                
+    def find_cyclist_match(self, search_query: str, cyclists: list[Cyclist]) -> Cyclist | None:
+        rider_map = {r.full_name: r for r in cyclists}
+        
+        match = process.extractOne(
+            search_query, 
+            rider_map.keys(), 
+            scorer=fuzz.token_sort_ratio,
+            processor=utils.default_process
+        )
+        
+        if match:
+            matched_name, score, index = match
+            
+            if score < 80:  # Threshold for acceptable match
+                logger.warning(f"Low confidence match for search query '{search_query}': '{matched_name}' (Score: {score})")
+                return None
+            
+            else:
+                logger.info(f"Search: {search_query} | Matched: {matched_name} (Score: {score})")
+                found_rider = rider_map[matched_name]
+                return found_rider
+            
+        else:
+            logger.warning(f"No match found for search query: {search_query}")
+            return None
+                
+            
+        
+def get_sync_service(
+    base_repo: BaseRepository = Depends(get_base_repository),
+    result_repo: ResultRepository = Depends(get_result_repository)
+) -> SyncService:
+    return SyncService(base_repo, result_repo)
