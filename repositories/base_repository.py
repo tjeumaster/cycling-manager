@@ -43,6 +43,9 @@ class BaseRepository:
     async def get_pcs_races(self) -> list[Race]:
         rows = queries.get_pcs_races(self.conn)
         return [Race.model_validate(dict(row)) async for row in rows]
+    
+    async def update_race_status(self, race_id: int, status: str):
+        await queries.update_race_status(self.conn, id=race_id, status=status)
 
 def get_base_repository(conn: Connection = Depends(db.get_connection)) -> BaseRepository:
     return BaseRepository(conn)

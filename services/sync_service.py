@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 import json
 from config import settings
 from fastapi import Depends
 from models.cyclist import Cyclist, CyclistCreate
-from models.race import RaceCategoryPointsCreate, RaceCreate
+from models.race import PcsRace, RaceCategoryPointsCreate, RaceCreate, RaceStatus
 from models.result import RaceResultCreate
 from models.team import TeamCreate
 from repositories.base_repository import BaseRepository, get_base_repository
@@ -12,7 +13,9 @@ from loguru import logger
 from zoneinfo import ZoneInfo
 from rapidfuzz import process, fuzz, utils
 from repositories.result_repository import ResultRepository, get_result_repository
-from services.pcs_service import PcsService
+from services.pcs_service import PcsService, RaceCircuit, RaceClass
+
+
 
 @dataclass
 class SyncService:
@@ -174,6 +177,11 @@ class SyncService:
         for race in races:
             result = await pcs.fetch_race_results(race.pcs_path, race.year)
             
+            if not result:
+                logger.warning(f"No results found for race: {race.name}")
+                await self.base_repo.update_race_status(race.id, RaceStatus.CANCELED)
+                continue
+            
             for r in result:
                 search_query = r.cyclist_name
                 cyclist = self.find_cyclist_match(search_query, cyclists)
@@ -187,6 +195,7 @@ class SyncService:
                 )
                     
                 await self.result_repo.insert_race_result(race_result)
+                await self.base_repo.update_race_status(race.id, RaceStatus.FINISHED)
                 
     def find_cyclist_match(self, search_query: str, cyclists: list[Cyclist]) -> Cyclist | None:
         rider_map = {r.full_name: r for r in cyclists}
@@ -213,9 +222,32 @@ class SyncService:
         else:
             logger.warning(f"No match found for search query: {search_query}")
             return None
-                
-            
         
+    async def sync_pcs_races(self, year: int):
+        pcs = PcsService()
+        races: list[PcsRace] = []
+        # fetch lists and extend the combined list
+        logger.info(f"Fetching PCS races for year {year}...")
+        wt = await pcs.fetch_races_list(year, RaceCircuit.WORLD_TOUR, RaceClass.WORLD_TOUR)
+        ps = await pcs.fetch_races_list(year, RaceCircuit.PRO_SERIES, RaceClass.PRO_SERIES)
+        if wt:
+            races.extend(wt)
+        if ps:
+            races.extend(ps)
+        
+        logger.info(races)
+        
+        for race in races:
+            r = RaceCreate(
+                name = race.name,
+                year = race.year,
+                start_timestamp = race.start_timestamp,
+                category = race.category,
+                pcs_path = race.pcs_path
+            )
+            
+            await self.base_repo.insert_race(r)
+      
 def get_sync_service(
     base_repo: BaseRepository = Depends(get_base_repository),
     result_repo: ResultRepository = Depends(get_result_repository)

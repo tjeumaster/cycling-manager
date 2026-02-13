@@ -34,5 +34,11 @@ class RaceCategoryPointsCreate(BaseModel):
     position: int
     points: int
     
+class PcsRace(BaseModel):
+    name: str
+    start_timestamp: datetime
+    year: int
+    category: RaceCategory
+    pcs_path: str
     
     

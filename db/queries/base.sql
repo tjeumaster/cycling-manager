@@ -45,6 +45,11 @@ INSERT INTO races (
 )
 ON CONFLICT (name, year) DO NOTHING;
 
+-- name: update_race_status(id, status)!
+UPDATE races
+SET status = :status
+WHERE id = :id;
+
 -- name: get_races()
 SELECT id, name, year, start_timestamp, category, pcs_path, status
 FROM races
@@ -58,4 +63,4 @@ ON CONFLICT (category, position) DO NOTHING;
 -- name: get_pcs_races()
 SELECT id, name, year, start_timestamp, category, pcs_path, status
 FROM races
-WHERE pcs_path IS NOT NULL;
+WHERE pcs_path IS NOT NULL AND status = 'planned';
