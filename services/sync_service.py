@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
 import json
 from config import settings
 from fastapi import Depends
@@ -169,9 +168,9 @@ class SyncService:
             logger.error(message)
             raise Exception(message)
     
-    async def sync_race_results(self):
+    async def sync_race_results(self, year: int):
         pcs = PcsService()
-        races = await self.base_repo.get_pcs_races()
+        races = await self.base_repo.get_pcs_races(year)
         cyclists = await self.base_repo.get_cyclists()
         
         for race in races:
@@ -195,7 +194,6 @@ class SyncService:
                 )
                     
                 await self.result_repo.insert_race_result(race_result)
-                await self.base_repo.update_race_status(race.id, RaceStatus.FINISHED)
                 
     def find_cyclist_match(self, search_query: str, cyclists: list[Cyclist]) -> Cyclist | None:
         rider_map = {r.full_name: r for r in cyclists}
@@ -247,7 +245,19 @@ class SyncService:
             )
             
             await self.base_repo.insert_race(r)
-      
+
+    async def sync_startlist(self, year: int):  
+        races = await self.base_repo.get_pcs_races(year)
+        cyclists = await self.base_repo.get_cyclists()
+        pcs = PcsService()  
+        for race in races:
+            await self.base_repo.delete_race_cyclists(race.id)
+            startlist = await pcs.fetch_startlist(race.pcs_path, race.year)
+            for rider_name in startlist:
+                cyclist = self.find_cyclist_match(rider_name, cyclists)
+                if cyclist:
+                    await self.base_repo.insert_race_cyclist(race.id, cyclist.id)
+                
 def get_sync_service(
     base_repo: BaseRepository = Depends(get_base_repository),
     result_repo: ResultRepository = Depends(get_result_repository)

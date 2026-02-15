@@ -50,9 +50,10 @@ UPDATE races
 SET status = :status
 WHERE id = :id;
 
--- name: get_races()
+-- name: get_races(year)
 SELECT id, name, year, start_timestamp, category, pcs_path, status
 FROM races
+WHERE year = :year
 ORDER BY start_timestamp;
 
 -- name: insert_race_category_points(category, position, points)!
@@ -60,7 +61,29 @@ INSERT INTO race_category_points (category, position, points)
 VALUES (:category, :position, :points)
 ON CONFLICT (category, position) DO NOTHING;
 
--- name: get_pcs_races()
+-- name: get_pcs_races(year)
 SELECT id, name, year, start_timestamp, category, pcs_path, status
 FROM races
-WHERE pcs_path IS NOT NULL AND status = 'planned';
+WHERE pcs_path IS NOT NULL 
+    AND status = 'planned' 
+    AND year = :year 
+    AND start_timestamp < NOW();
+
+-- name: insert_race_cyclist(race_id, cyclist_id)!
+INSERT INTO race_cyclists (race_id, cyclist_id)
+VALUES (:race_id, :cyclist_id)
+ON CONFLICT (race_id, cyclist_id) DO NOTHING;   
+
+-- name: get_race_cyclists(race_id)
+SELECT c.id, c.first_name, c.last_name, c.team_id, c.price, 
+    c.birth_date, c.nationality, c.image_url,
+    t.name AS team_name, t.code AS team_code, 
+    t.image_url AS team_image_url
+FROM race_cyclists rc
+JOIN cyclists c ON rc.cyclist_id = c.id
+JOIN teams t ON c.team_id = t.id
+WHERE rc.race_id = :race_id;
+
+-- name: delete_race_cyclists(race_id)!
+DELETE FROM race_cyclists WHERE race_id = :race_id;
+

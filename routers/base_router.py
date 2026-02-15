@@ -1,3 +1,4 @@
+from models.result import RaceResult
 from fastapi import APIRouter, Depends, HTTPException
 from models.cyclist import Cyclist
 from models.race import Race
@@ -31,4 +32,25 @@ async def get_races(
         return await repository.get_races()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/races/cyclists")
+async def get_race_cyclists(
+    race_id: int,
+    repository: BaseRepository = Depends(get_base_repository)
+) -> list[Cyclist]:
+    try:
+        return await repository.get_race_cyclists(race_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/races/results")
+async def get_race_results(
+    race_id: int,
+    repository: BaseRepository = Depends(get_base_repository)
+) -> list[RaceResult]:
+    try:
+        return await repository.get_race_results(race_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     

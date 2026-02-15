@@ -15,4 +15,6 @@ dependencies = [
     "pydantic>=2.12.5",
     "rapidfuzz>=3.14.3",
     "yoyo-migrations>=9.0.0",
+    "pyjwt>=2.8.0",
+    "bcrypt>=5.0.0",
 ]
