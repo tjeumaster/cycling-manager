@@ -2,7 +2,7 @@ from services.pcs_service import PcsService, RaceCircuit, RaceClass
 
 async def main():
     s = PcsService()
-    races = await s.fetch_races_list(2025, RaceCircuit.PRO_SERIES, RaceClass.PRO_SERIES)
+    races = await s.fetch_startlist("2026")
     for race in races:
         print(race)
         

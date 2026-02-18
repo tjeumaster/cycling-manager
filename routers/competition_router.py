@@ -36,3 +36,4 @@ async def get_competition_by_name(
         return await competition_repository.get_competition_by_name(name)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

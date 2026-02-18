@@ -253,6 +253,7 @@ class SyncService:
         for race in races:
             await self.base_repo.delete_race_cyclists(race.id)
             startlist = await pcs.fetch_startlist(race.pcs_path, race.year)
+            logger.info(startlist)
             for rider_name in startlist:
                 cyclist = self.find_cyclist_match(rider_name, cyclists)
                 if cyclist:

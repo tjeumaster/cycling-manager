@@ -26,9 +26,9 @@ class SquadRepository:
         except Exception as e:
             raise Exception(f"Failed to get squads: {str(e)}")
 
-    async def get_squad_cyclists(self, squad_id: int, user_id: int) -> list[Cyclist]:
+    async def get_squad_cyclists(self, squad_id: int) -> list[Cyclist]:
         try:
-            rows = queries.get_squad_cyclists(self.conn, squad_id=squad_id, user_id=user_id)
+            rows = queries.get_squad_cyclists(self.conn, squad_id=squad_id)
             return [Cyclist.model_validate(dict(row)) async for row in rows]
 
         except Exception as e:
@@ -65,6 +65,13 @@ class SquadRepository:
 
         except Exception as e:
             raise Exception(f"Failed to get squad price: {str(e)}")
+
+    async def delete_squad(self, squad_id: int) -> None:
+        try:
+            return await queries.delete_squad(self.conn, squad_id=squad_id)
+
+        except Exception as e:
+            raise Exception(f"Failed to delete squad: {str(e)}")
 
 def get_squad_repository(
     conn: Connection = Depends(db.get_connection),

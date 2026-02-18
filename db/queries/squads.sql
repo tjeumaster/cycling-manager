@@ -14,7 +14,7 @@ SELECT id, name, user_id
 FROM squads
 WHERE id = :squad_id;
 
--- name: get_squad_cyclists(squad_id, user_id)
+-- name: get_squad_cyclists(squad_id)
 SELECT c.id, c.first_name, c.last_name, c.team_id, c.price, 
     c.birth_date, c.nationality, c.image_url,
     t.name AS team_name, t.code AS team_code, 
@@ -23,7 +23,7 @@ FROM squad_cyclists sc
 JOIN cyclists c ON sc.cyclist_id = c.id
 JOIN squads s ON sc.squad_id = s.id
 JOIN teams t ON c.team_id = t.id
-WHERE s.id = :squad_id AND s.user_id = :user_id;
+WHERE s.id = :squad_id;
 
 -- name: add_cyclist(squad_id, cyclist_id)!
 INSERT INTO squad_cyclists (squad_id, cyclist_id)
@@ -41,6 +41,11 @@ WHERE squad_id = :squad_id;
 SELECT SUM(c.price) as total_price
 FROM cyclists c 
 WHERE c.id = ANY(:squad_ids);
+
+-- name: delete_squad(squad_id)!
+DELETE FROM squads
+WHERE id = :squad_id;
+
 
 
 

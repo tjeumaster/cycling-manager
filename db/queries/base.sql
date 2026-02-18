@@ -56,6 +56,14 @@ FROM races
 WHERE year = :year
 ORDER BY start_timestamp;
 
+-- name: get_next_race()^
+SELECT id, name, year, start_timestamp, category, pcs_path, status
+FROM races
+WHERE start_timestamp > NOW()
+ORDER BY start_timestamp
+LIMIT 1;
+
+
 -- name: insert_race_category_points(category, position, points)!
 INSERT INTO race_category_points (category, position, points)
 VALUES (:category, :position, :points)
@@ -67,7 +75,6 @@ FROM races
 WHERE pcs_path IS NOT NULL 
     AND status = 'planned' 
     AND year = :year 
-    AND start_timestamp < NOW();
 
 -- name: insert_race_cyclist(race_id, cyclist_id)!
 INSERT INTO race_cyclists (race_id, cyclist_id)
