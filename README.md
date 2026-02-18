@@ -170,8 +170,8 @@ erDiagram
     CYCLISTS ||--o{ SQUAD_TRANSFERS : involved
     USERS ||--o{ COMPETITIONS : created
 
-    RACE_CATEGORY_POINTS ||..|| RACES : category = category
-    RACE_CATEGORY_POINTS ||..|| RACE_RESULTS : position = position
+    RACE_CATEGORY_POINTS ||..|| RACES : category
+    RACE_CATEGORY_POINTS ||..|| RACE_RESULTS : position
 
     %% Notes: partial unique indexes enforce single leaders on squads/selections.
 
