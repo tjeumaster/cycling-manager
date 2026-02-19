@@ -23,6 +23,7 @@ class Cyclist(BaseModel):
     team_code: str
     team_image_url: str
     image_url: str
+    is_participating: bool | None = None
     
     @computed_field
     @property

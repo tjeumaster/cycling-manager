@@ -36,6 +36,7 @@ async def get_squads(
 @router.get(path="/{id}/cyclists", summary="Get all cyclists for a squad")
 async def get_squad_cyclists(
     id: int,
+    race_id: int | None = None,
     squad_repository: SquadRepository = Depends(get_squad_repository),
     user: User = Depends(get_current_user)
 ):
@@ -44,7 +45,7 @@ async def get_squad_cyclists(
         if squad.user_id != user.id:
             raise HTTPException(status_code=403, detail="You do not have permission to view this squad")
         
-        return await squad_repository.get_squad_cyclists(id)
+        return await squad_repository.get_squad_cyclists(id, race_id=race_id)
     except Exception as e:  
         raise HTTPException(status_code=400, detail=str(e))
 

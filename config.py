@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     YEAR: int
     SQUAD_SIZE: int
     MAX_SQUAD_BUDGET: int
+    SELECTION_SIZE: int
 
     model_config = SettingsConfigDict(env_file=".env")
 

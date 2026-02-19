@@ -26,9 +26,9 @@ class SquadRepository:
         except Exception as e:
             raise Exception(f"Failed to get squads: {str(e)}")
 
-    async def get_squad_cyclists(self, squad_id: int) -> list[Cyclist]:
+    async def get_squad_cyclists(self, squad_id: int, race_id: int | None = None) -> list[Cyclist]:
         try:
-            rows = queries.get_squad_cyclists(self.conn, squad_id=squad_id)
+            rows = queries.get_squad_cyclists(self.conn, squad_id=squad_id, race_id=race_id)
             return [Cyclist.model_validate(dict(row)) async for row in rows]
 
         except Exception as e:
